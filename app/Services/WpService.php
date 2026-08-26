@@ -74,10 +74,13 @@ class WpService
             $url = config('api.api_url') . $resource;
         }
 
-        $responseData = Http::acceptJson()
-            ->timeout(60)
-            ->get($url)
-            ->json();
+        $request = Http::acceptJson()->timeout(60);
+
+        if ($appVersion = request()->header('App-Version')) {
+            $request = $request->withHeaders(['App-Version' => $appVersion]);
+        }
+
+        $responseData = $request->get($url)->json();
 
         if (!$this->isValid($responseData)) {
             return '';
