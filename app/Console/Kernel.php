@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('update-data')->hourly();
+        $schedule->command('update-data')->hourly()->withoutOverlapping();
     }
 
     /**
