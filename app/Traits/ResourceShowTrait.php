@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Services\WpService;
 use Illuminate\Http\JsonResponse;
 
 trait ResourceShowTrait
@@ -10,8 +11,9 @@ trait ResourceShowTrait
     {
 
         $singleResourceId = request()->route("resourceId");
-        $cacheKey = "{$this->resourceSingular}:{$singleResourceId}";
-        
+        $bucket = WpService::bucket(request()->header('App-Version'));
+        $cacheKey = "{$this->resourceSingular}:{$singleResourceId}:{$bucket}";
+
         if ($this->cacheService->exists($cacheKey)) {
             return response()->json(
                 $this->cacheService->get($cacheKey),

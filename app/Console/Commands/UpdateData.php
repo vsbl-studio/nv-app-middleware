@@ -24,6 +24,8 @@ class UpdateData extends Command
      */
     protected $description = 'Fetches data from WP and saves it to cache';
 
+    private string $bucket;
+
 
     /**
      * Execute the console command.
@@ -33,26 +35,32 @@ class UpdateData extends Command
     public function handle()
     {
 
-        $this->wpService = new WpService();
         $this->cacheService = new CacheService();
-
 
         $this->info("Data update started");
         $this->newLine();
 
+        foreach (array_keys(WpService::BUCKET_HEADERS) as $bucket) {
 
-        $this->updateLists('v2');
-        $this->updateLists('v3');
-        $this->updateSingleRecords('v2');
-        $this->updateSingleRecords('v3');
+            $this->bucket = $bucket;
+            // Fresh instance per bucket so the memoised lists do not leak across app versions.
+            $this->wpService = new WpService($bucket);
 
+            $this->newLine();
+            $this->info("bucket: {$bucket}");
 
-        $this->updateCategories('v2');
-        $this->updateCategories('v3');
+            $this->updateLists('v2');
+            $this->updateLists('v3');
+            $this->updateSingleRecords('v2');
+            $this->updateSingleRecords('v3');
 
-        $this->updatePages('v2');
-        $this->updatePages('v3');
+            $this->updateCategories('v2');
+            $this->updateCategories('v3');
 
+            $this->updatePages('v2');
+            $this->updatePages('v3');
+
+        }
 
         $this->newLine();
         $this->info("Data update finished");
@@ -69,7 +77,7 @@ class UpdateData extends Command
         foreach ($lists as $list => $data) {
 
             $this->newLine();
-            $this->info($this->cacheService->set($version . '/' . $list, $data));
+            $this->info($this->cacheService->set($version . '/' . $list . ':' . $this->bucket, $data));
 
         }
 
@@ -90,7 +98,7 @@ class UpdateData extends Command
                 $record = $this->wpService->get("${version}/{$type}/{$ID}");
 
                 $this->newLine();
-                $this->info($this->cacheService->set("${version}/{$type}:{$ID}", $record));
+                $this->info($this->cacheService->set("${version}/{$type}:{$ID}:{$this->bucket}", $record));
 
 
             }
@@ -110,7 +118,7 @@ class UpdateData extends Command
         foreach ($categories as $category => $data) {
 
             $this->newLine();
-            $this->info($this->cacheService->set($version . '/' . $category, $data));
+            $this->info($this->cacheService->set($version . '/' . $category . ':' . $this->bucket, $data));
 
         }
 
@@ -127,7 +135,7 @@ class UpdateData extends Command
         foreach ($pages as $page => $data) {
 
             $this->newLine();
-            $this->info($this->cacheService->set($version . '/' . $page, $data));
+            $this->info($this->cacheService->set($version . '/' . $page . ':' . $this->bucket, $data));
 
         }
 
